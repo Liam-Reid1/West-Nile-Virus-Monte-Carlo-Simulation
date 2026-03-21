@@ -7,7 +7,11 @@ import numpy as np
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
-GRID_SIZE = 5
+GRID_SIZE = 15
+remw = SCREEN_WIDTH % GRID_SIZE
+remh = SCREEN_HEIGHT % GRID_SIZE
+SCREEN_WIDTH = SCREEN_WIDTH + (GRID_SIZE - remw) if remw else SCREEN_WIDTH
+SCREEN_HEIGHT = SCREEN_HEIGHT + (GRID_SIZE - remh) if remh else SCREEN_HEIGHT
 CELL_SIZE = SCREEN_WIDTH // GRID_SIZE 
 
 BLACK = (0, 0, 0)
@@ -17,6 +21,7 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 ORANGE = (255, 165, 0)
 LINE_COLOR = (200, 200, 200)
+
 
 pygame.init()
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -53,6 +58,43 @@ def biteCheck(host, victim):
         victim['infected'] = True
     return victim
 
+def deathCheck(victim):
+    if (victim['dead']):
+        return victim
+    if (victim['infected']):
+        #add percentage here
+        victim['dead'] = True
+
+def randomWalk(entity):
+    #NESW
+    p = 10
+    p = 25 if (p * 4 > 100) else p
+    r = random.randint(0, 100)
+    if (r < p): #North
+        if (entity['y'] > 0):
+            entity['y'] -= 1
+    elif (r < p * 2): #East
+        if (entity['x'] < GRID_SIZE - 1):
+            entity['x'] += 1
+    elif (r < p * 3): #South
+        if (entity['y'] < GRID_SIZE - 1):
+            entity['y'] += 1
+    elif (r < p * 4): #West
+        if (entity['x'] > 0):
+            entity['x'] -= 1
+    return(entity)
+
+def moveEntities(m, b, h):
+    for i in m:
+        randomWalk(m[i])
+    for i in b:
+        if (not b[i]['dead']):
+            randomWalk(b[i])
+    for i in h:
+        if (not h[i]['dead']):
+            randomWalk(h[i])
+
+
 def drawGrid():
     for x in range(0, SCREEN_WIDTH, CELL_SIZE):
         for y in range(0, SCREEN_HEIGHT, CELL_SIZE):
@@ -65,7 +107,7 @@ def drawMosquito(x, y, infected):
     mPos = ((CELL_SIZE * x) + (CELL_SIZE * 1 / 4), (CELL_SIZE * y) + (CELL_SIZE * 1 / 4))
     miPos = ((CELL_SIZE * x) + (CELL_SIZE * 2 / 4), (CELL_SIZE * y) + (CELL_SIZE * 1 / 4))
     outerCircle = 50 / GRID_SIZE
-    innerCircle = 25 / GRID_SIZE
+    innerCircle = 40 / GRID_SIZE
 
     if (infected):
         pygame.draw.circle(SCREEN, RED, miPos, outerCircle)
@@ -78,7 +120,7 @@ def drawBird(x, y, infected, dead):
     biPos = ((CELL_SIZE * x) + (CELL_SIZE * 2 / 4), (CELL_SIZE * y) + (CELL_SIZE * 2 / 4))
     bdPos = ((CELL_SIZE * x) + (CELL_SIZE * 3 / 4), (CELL_SIZE * y) + (CELL_SIZE * 2 / 4))
     outerCircle = 50 / GRID_SIZE
-    innerCircle = 25 / GRID_SIZE
+    innerCircle = 40 / GRID_SIZE
 
     
     if (dead):
@@ -95,7 +137,7 @@ def drawHuman(x, y, infected, dead):
     hiPos = ((CELL_SIZE * x) + (CELL_SIZE * 2 / 4), (CELL_SIZE * y) + (CELL_SIZE * 3 / 4))
     hdPos = ((CELL_SIZE * x) + (CELL_SIZE * 3 / 4), (CELL_SIZE * y) + (CELL_SIZE * 3 / 4))
     outerCircle = 50 / GRID_SIZE
-    innerCircle = 25 / GRID_SIZE
+    innerCircle = 40 / GRID_SIZE
 
     
     if (dead):
@@ -128,6 +170,8 @@ def main():
 
     for i in range(0, 100):
         m[i] = createMosquito(randomCell(), randomCell())
+        if (random.randint(0, 1) == 1):
+            m[i]['infected'] = True
 
     for i in range(0, 25):
         b[i] = createBird(randomCell(), randomCell())
@@ -159,8 +203,10 @@ def main():
 
         drawGrid()  # Call the function to draw the grid
         placeEntities(m, b, h)
+        moveEntities(m, b, h)
+
         pygame.display.update()  # Update the display to make changes visible
-        CLOCK.tick(30) # Cap the frame rate at 30 FPS
+        CLOCK.tick(3) # Cap the frame rate at 30 FPS
 
 if __name__ == "__main__":
     main()
