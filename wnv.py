@@ -162,38 +162,58 @@ def placeEntities(m, b, h):
                 if (h[i]['x'] == x and h[i]['y'] == y):
                     drawHuman(x, y, h[i]['infected'], h[i]['dead'])
 
+def mosquitoPopulation(m, mPop, t):
+    birthRate = 0.05 # change this to be determined by temp
+    deathRate = 0.03 # this too
+
+    mPop[t] = mPop[t-1] + (birthRate * mPop[t-1]) - (deathRate * mPop[t-1])
+    mPop[t] = max(0, mPop[t]) # prevent negative population
+    temp = mPop[t-1]
+    while (len(m) != int(mPop[t])):
+        if (len(m) > int(mPop[t])):
+            m.pop(next(iter(m)))
+        elif(len(m) < int(mPop[t])):
+            m[temp + 1] = createMosquito(randomCell(), randomCell())
+            temp += 1
+    print(mPop[t])
+           
+    
+
 
 def main():
     m = {}
     b = {}
     h = {}
 
-    for i in range(0, 100):
+    simTime = 100 # need to pick a time (days, hours, minutes)? 
+    mPop = np.zeros(simTime)
+    mPop[0] = 10
+    for i in range(0, int(mPop[0])):
         m[i] = createMosquito(randomCell(), randomCell())
         if (random.randint(0, 1) == 1):
             m[i]['infected'] = True
 
-    for i in range(0, 25):
-        b[i] = createBird(randomCell(), randomCell())
-        if (random.randint(0, 1) == 1):
-            b[i]['infected'] = True
-            if (random.randint(0, 1) == 1):
-                b[i]['dead'] = True
+#     for i in range(0, 25):
+#         b[i] = createBird(randomCell(), randomCell())
+#         if (random.randint(0, 1) == 1):
+#             b[i]['infected'] = True
+#             if (random.randint(0, 1) == 1):
+#                 b[i]['dead'] = True
 
-    for i in range(0, 25):
-        h[i] = createHuman(randomCell(), randomCell())
-        if (random.randint(0, 1) == 1):
-            h[i]['infected'] = True
-            if (random.randint(0, 1) == 1):
-                h[i]['dead'] = True
+#     for i in range(0, 25):
+#         h[i] = createHuman(randomCell(), randomCell())
+#         if (random.randint(0, 1) == 1):
+#             h[i]['infected'] = True
+#             if (random.randint(0, 1) == 1):
+#                 h[i]['dead'] = True
     
-    #print(h['infected'])
-    m[0]['infected'] = True
-    #h = biteCheck(h[0], m[0])
-   # print(h['infected'])
-    print(m[0]['x'], m[0]['y'])
-
-    while True:
+#     #print(h['infected'])
+#     m[0]['infected'] = True
+#     #h = biteCheck(h[0], m[0])
+#    # print(h['infected'])
+#     print(m[0]['x'], m[0]['y'])
+    t = 0
+    while t != simTime - 1:
         SCREEN.fill(BLACK)  # Fill the background with black
 
         for event in pygame.event.get():
@@ -204,6 +224,9 @@ def main():
         drawGrid()  # Call the function to draw the grid
         placeEntities(m, b, h)
         moveEntities(m, b, h)
+
+        t += 1
+        mosquitoPopulation(m, mPop, t)
 
         pygame.display.update()  # Update the display to make changes visible
         CLOCK.tick(3) # Cap the frame rate at 30 FPS
