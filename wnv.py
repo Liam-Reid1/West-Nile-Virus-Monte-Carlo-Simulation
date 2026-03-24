@@ -7,7 +7,7 @@ import numpy as np
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
-GRID_SIZE = 15
+GRID_SIZE = 10
 remw = SCREEN_WIDTH % GRID_SIZE
 remh = SCREEN_HEIGHT % GRID_SIZE
 SCREEN_WIDTH = SCREEN_WIDTH + (GRID_SIZE - remw) if remw else SCREEN_WIDTH
@@ -33,26 +33,23 @@ def randomCell():
 
 def createMosquito(x, y):
     return {
-        'x': x,
-        'y': y,
+        'coords': [x, y],
         'infected': False
     }
 def createBird(x, y):
     return {
-        'x': x,
-        'y': y,
+        'coords': [x, y],
         'infected': False,
         'dead': False
     }
 def createHuman(x, y):
     return {
-        'x': x,
-        'y': y,
+        'coords': [x, y],
         'infected': False,
         'dead': False
     }
-
-def biteCheck(host, victim):
+    
+def infectCheck(host, victim, chance):
     if (host['infected']):
         #add percentage here
         victim['infected'] = True
@@ -64,6 +61,7 @@ def deathCheck(victim):
     if (victim['infected']):
         #add percentage here
         victim['dead'] = True
+    return victim
 
 def randomWalk(entity):
     #NESW
@@ -71,17 +69,17 @@ def randomWalk(entity):
     p = 25 if (p * 4 > 100) else p
     r = random.randint(0, 100)
     if (r < p): #North
-        if (entity['y'] > 0):
-            entity['y'] -= 1
+        if (entity['coords'][1] > 0):
+            entity['coords'][1] -= 1
     elif (r < p * 2): #East
-        if (entity['x'] < GRID_SIZE - 1):
-            entity['x'] += 1
+        if (entity['coords'][0] < GRID_SIZE - 1):
+            entity['coords'][0] += 1
     elif (r < p * 3): #South
-        if (entity['y'] < GRID_SIZE - 1):
-            entity['y'] += 1
+        if (entity['coords'][1] < GRID_SIZE - 1):
+            entity['coords'][1] += 1
     elif (r < p * 4): #West
-        if (entity['x'] > 0):
-            entity['x'] -= 1
+        if (entity['coords'][0] > 0):
+            entity['coords'][0] -= 1
     return(entity)
 
 def moveEntities(m, b, h):
@@ -153,13 +151,13 @@ def placeEntities(m, b, h):
     for x in range(0, GRID_SIZE):
         for y in range(0, GRID_SIZE):
             for i in m:
-                if (m[i]['x'] == x and m[i]['y'] == y):
+                if (m[i]['coords'] == [x, y]):
                     drawMosquito(x, y, m[i]['infected'])
             for i in b:
-                if (b[i]['x'] == x and b[i]['y'] == y):
+                if (b[i]['coords'] == [x, y]):
                     drawBird(x, y, b[i]['infected'], b[i]['dead'])
             for i in h:
-                if (h[i]['x'] == x and h[i]['y'] == y):
+                if (h[i]['coords'] == [x, y]):
                     drawHuman(x, y, h[i]['infected'], h[i]['dead'])
 
 def mosquitoPopulation(m, mPop, t):
@@ -168,44 +166,53 @@ def mosquitoPopulation(m, mPop, t):
 
     mPop[t] = mPop[t-1] + (birthRate * mPop[t-1]) - (deathRate * mPop[t-1])
     mPop[t] = max(0, mPop[t]) # prevent negative population
-    temp = mPop[t-1]
+    temp = len(m)
     while (len(m) != int(mPop[t])):
         if (len(m) > int(mPop[t])):
             m.pop(next(iter(m)))
         elif(len(m) < int(mPop[t])):
-            m[temp + 1] = createMosquito(randomCell(), randomCell())
+            n = random.randint(0, temp - 1)
+            print(n)
+            m[temp] = createMosquito(m[n]['coords'][0], m[n]['coords'][1])
             temp += 1
     print(mPop[t])
-           
-    
 
+def biteCheck(m, b, h):
+    for i in m:
+        for j in b:
+            if (m[i]['coords'] == b[j]['coords']):
+                b[j] = infectCheck(m[i], b[j], 0) #change to percentage for biting for birds
+        for j in h:
+            if (m[i]['coords'] == h[j]['coords']):
+                h[j] = infectCheck(m[i], h[j], 0) # same here
 
 def main():
     m = {}
     b = {}
     h = {}
 
+
     simTime = 100 # need to pick a time (days, hours, minutes)? 
     mPop = np.zeros(simTime)
-    mPop[0] = 10
+    mPop[0] = 1
     for i in range(0, int(mPop[0])):
         m[i] = createMosquito(randomCell(), randomCell())
         if (random.randint(0, 1) == 1):
             m[i]['infected'] = True
 
-#     for i in range(0, 25):
-#         b[i] = createBird(randomCell(), randomCell())
-#         if (random.randint(0, 1) == 1):
-#             b[i]['infected'] = True
-#             if (random.randint(0, 1) == 1):
-#                 b[i]['dead'] = True
+    for i in range(0, 1):
+        b[i] = createBird(randomCell(), randomCell())
+        if (random.randint(0, 1) == 1):
+            b[i]['infected'] = True
+            if (random.randint(0, 1) == 1):
+                b[i]['dead'] = True
 
-#     for i in range(0, 25):
-#         h[i] = createHuman(randomCell(), randomCell())
-#         if (random.randint(0, 1) == 1):
-#             h[i]['infected'] = True
-#             if (random.randint(0, 1) == 1):
-#                 h[i]['dead'] = True
+    for i in range(0, 1):
+        h[i] = createHuman(randomCell(), randomCell())
+        if (random.randint(0, 1) == 1):
+            h[i]['infected'] = True
+            if (random.randint(0, 1) == 1):
+                h[i]['dead'] = True
     
 #     #print(h['infected'])
 #     m[0]['infected'] = True
@@ -227,6 +234,8 @@ def main():
 
         t += 1
         mosquitoPopulation(m, mPop, t)
+        biteCheck(m, b, h)
+
 
         pygame.display.update()  # Update the display to make changes visible
         CLOCK.tick(3) # Cap the frame rate at 30 FPS
