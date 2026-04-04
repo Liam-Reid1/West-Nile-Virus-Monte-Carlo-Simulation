@@ -200,7 +200,7 @@ def mosquito_walk(entity, hosts):
                 return
     random_walk(entity)
 
-def human_walk(entity):
+def home_walk(entity):
     if random.random() < 0.30 and entity['coords'] != entity['home']:
         entity['coords'] = step_toward(entity['coords'], entity['home'])
     else:
@@ -244,7 +244,6 @@ def tick_entities(mosquitoes, birds, humans):
 def bite_check(mosquitoes, birds, humans, p_bite_bird, p_bite_human):
     bird_map = {}
     for b in birds:
-        #if b['state'] != D:
         bird_map.setdefault(tuple(b['coords']), []).append(b)
     human_map = {}
     for h in humans:
@@ -328,10 +327,10 @@ def run_headless(habitat, seed):
             mosquito_walk(m, all_hosts)
         for b in birds:
             if b['state'] != D:
-                random_walk(b)
+                home_walk(b) #change back to random walk if wanted
         for h in humans:
             if h['state'] != D:
-                human_walk(h)
+                home_walk(h)
         bite_check(mosquitoes, birds, humans, pb, ph)
         tick_entities(mosquitoes, birds, humans)
         update_mosquito_pop(mosquitoes, day, wcells)
@@ -676,10 +675,10 @@ def main():
             mosquito_walk(m, all_hosts)
         for b in birds:
             if b['state'] != D:
-                random_walk(b)
+                home_walk(b) #change back to random walk if wanted
         for h in humans:
             if h['state'] != D:
-                human_walk(h)
+                home_walk(h)
 
         bite_check(mosquitoes, birds, humans, pb, ph)
         tick_entities(mosquitoes, birds, humans)
