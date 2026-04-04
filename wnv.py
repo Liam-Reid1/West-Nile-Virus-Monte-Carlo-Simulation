@@ -54,12 +54,14 @@ SIM_DAYS        = 365
 FPS_DEFAULT     = 10
 MC_RUNS         = 25
 
+# Starting populations for each entity
 INIT_MOSQ       = 40
 INIT_BIRDS      = 20
 INIT_RESIDENTS  = 5
 INIT_HUMANS     = 12
 
-MOSQ_INCUB      = 14
+# Incubus: Time until entity goes from exposed (E) to infected (I)
+MOSQ_INCUB      = 14 
 BIRD_INCUB      = 3
 HUMAN_INCUB     = 7
 
@@ -134,7 +136,7 @@ def temperature(day):
 
 def bite_rates(day):
     temp = temperature(day)
-    if temp < 5:
+    if temp < 5: # No biting below 5C
         return 0.0, 0.0
     scale = min(1.0, (temp - 5) / 20)
     return BASE_BITE_BIRD * scale, BASE_BITE_HUMAN * scale
@@ -242,8 +244,8 @@ def tick_entities(mosquitoes, birds, humans):
 def bite_check(mosquitoes, birds, humans, p_bite_bird, p_bite_human):
     bird_map = {}
     for b in birds:
-        if b['state'] != D:
-            bird_map.setdefault(tuple(b['coords']), []).append(b)
+        #if b['state'] != D:
+        bird_map.setdefault(tuple(b['coords']), []).append(b)
     human_map = {}
     for h in humans:
         if h['state'] != D:
@@ -255,7 +257,7 @@ def bite_check(mosquitoes, birds, humans, p_bite_bird, p_bite_human):
             if random.random() < p_bite_bird:
                 if m['state'] == I:
                     expose(b, BIRD_INCUB)
-                if b['state'] == I and m['state'] == S and random.random() < P_BtoM:
+                if ((b['state'] == I or b['state'] == D) and m['state'] == S and random.random() < P_BtoM):
                     expose(m, MOSQ_INCUB)
         for h in human_map.get(key, []):
             if random.random() < p_bite_human:
@@ -283,7 +285,7 @@ def update_bird_pop(birds, day, fcells):
             birds.append(nb)
             migratory.append(nb)
     else:
-        birds[:] = [b for b in birds if b['resident']]
+        birds[:] = [b for b in birds if (b['resident'] or b['state'] == D)]
 
 # Stats 
 def _mean(lst):
@@ -692,7 +694,7 @@ def main():
         day += 1
 
     # Post sim 
-    export_csv(history)
+    #export_csv(history)
     show_summary(history, mc_bands)
 
     while True:
